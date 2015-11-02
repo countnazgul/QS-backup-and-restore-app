@@ -1,0 +1,14 @@
+{
+	"type": "mashup",
+	"name": "CreateApp",
+	"version": "1.0.0",
+	"description": "Mashup template based on a Bootstrap with an image header",
+	"homepage": "",
+	"author": "",
+	"keywords": "qlik-sense, mashup",
+	"license": "",
+	"repository": "",
+	"dependencies": {
+		"qlik-sense": ">=2.1.x"
+	}
+}
