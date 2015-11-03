@@ -44,7 +44,7 @@ require(['jquery', 'qsocks'], function($, qsocks) {
   fileInput.addEventListener('change', readFile); 
  
  
-	var selectedApp = "Executive Dashboard.qvf" ; 
+	var selectedApp = "94318f12-5911-4f37-86ab-5050cb3f3a7e"; //"Executive Dashboard.qvf" ; 
   //"TestCreate.qvf";
 	var appConfig = {
 	  host: window.location.hostname,
@@ -64,31 +64,49 @@ require(['jquery', 'qsocks'], function($, qsocks) {
               return obj.qType === 'sheet'|| obj.qType === 'story' || obj.qType === 'masterobject' || obj.qType === 'dimension' || obj.qType === 'measure' || obj.qType === 'snapshot'
             }) //.then( function() {
             Promise.all( allSheets.map(function( d ) {
+
                     switch( d.qType ) {
                       case "sheet":
                       case "masterobject":
                       case "story":
-                      case "snapshot":
+						//console.log( d.qType + ' ' + d.qId )
                         return app.destroyObject( d.qId ).then( function( delmsg ) {
-                          console.log( 'Sheet ID: ' + d.qId + ' and its objects was deleted' );
-                          console.log( delmsg )
-                          //return null                 
-                        })             
+                          console.log( d.qType + ' ID: ' + d.qId + ' and its objects was deleted' );
+						  if( delmsg == false ) {
+							console.log( delmsg )
+						  }
+                          return null                 
+                        })
                         break;
                       case "dimension":
+					  //console.log( 'Dimension ' + d.qId )
                         return app.destroyDimension( d.qId ).then( function( delmsg ) {
                           console.log( 'Dimension ID: ' + d.qId + ' was deleted' )
-                          console.log( delmsg )
-                          //return null                            
+                          if( delmsg == false ) {
+							console.log( delmsg )
+						  }
+                          return null                            
                         })
                         break;
                       case "measure":
-                        return app.destroyMeasure( d.qId ).then( function( delmsg ) {
+						 //console.log( 'Measure ' + d.qId )
+                         return app.destroyMeasure( d.qId ).then( function( delmsg ) {
                           console.log( 'Measure ID: ' + d.qId + ' was deleted' )
-                          console.log( delmsg )
-                          //return null                            
-                        })                    
+                          if( delmsg == false ) {
+							console.log( delmsg )
+						  }
+                          return null                            
+                        })
                         break;
+                      case "snapshot":
+                         return app.destroyBookmark( d.qId ).then( function( delmsg ) {
+                          console.log( 'Snapshot ID: ' + d.qId + ' was deleted' )
+                          if( delmsg == false ) {
+							console.log( delmsg )
+						  }
+                          return null                            
+                        })
+                        break;						
                     }
                     return null
             })).then( function() {
@@ -123,12 +141,13 @@ require(['jquery', 'qsocks'], function($, qsocks) {
                           })
                         })).then( function() {
                         Promise.all(measures.map(function( measure ) {
-                          return app.createDimension( measure ).then( function( obj ) {
+                          return app.createMeasure( measure ).then( function( obj ) {
                             console.log( 'Measure: "' + measure.qMetaDef.title + '" (' + measure.qInfo.qId + ') was created' );
                           })
                         })).then( function() {
                         Promise.all(snapshots.map(function( sn ) {
-                          return app.createDimension( sn ).then( function( obj ) {                            
+                          return app.createBookmark( sn ).then( function( obj ) {
+							//console.log( obj )
                             console.log( 'Snapshot: "' + sn.qMetaDef.title + '" (' + sn.qInfo.qId + ') was created' );
                           })
                         })).then( function() {
