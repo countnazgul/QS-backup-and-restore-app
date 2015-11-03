@@ -18,7 +18,7 @@ require.config({
 require(['jquery', 'qsocks'], function($, qsocks) {
 
   var backupContent;
-  var sheets, loadScript, embeddedmedia, thumbnail, stories, masterobjects;
+  var sheets, loadScript, embeddedmedia, thumbnail, stories, masterobjects, dimensions, measures, snapshots, properties, dataconnections;
   var fileInput = document.getElementById("json");
   var readFile = function () {
           var reader = new FileReader();
@@ -31,7 +31,12 @@ require(['jquery', 'qsocks'], function($, qsocks) {
               embeddedmedia = backupContent.embeddedmedia;
               thumbnail = backupContent.thumbnail;
               stories = backupContent.stories;
-              masterobjects = backupContent.masterobjects;              
+              masterobjects = backupContent.masterobjects;
+              dimensions = backupContent.dimensions;
+              measures = backupContent.measures;
+              snapshots = backupContent.snapshots;
+              properties = backupContent.properties;
+              dataconnections = backupContent.dataconnections;              
           };
           reader.readAsBinaryString(fileInput.files[0]);
       };
@@ -56,27 +61,36 @@ require(['jquery', 'qsocks'], function($, qsocks) {
           // remove all sheets
           app.getAllInfos().then( function( allobjects ) {
             var allSheets = allobjects.qInfos.filter( function( obj ) {
-              return obj.qType === 'sheet'|| obj.qType === 'story' || obj.qType === 'masterobject'
-            })
-                         
-            //  for( var i = 0; i < allSheets.length; i++ ) {
-            //    var sheet = allSheets[i];
-            //    app.destroyObject( sheet.qId ).then( function( delmsg ) {
-                 
-            //    });
-            //  }
-             
-            Promise.all(allSheets.map(function(d) {
-                    return app.destroyObject( d.qId ).then( function( delmsg ) {
-                      if( d.qType === 'sheet' ) {
-                        console.log( 'Sheet ID: ' + d.qId + ' and its objects was deleted' )
-                      } else if( d.qType === 'story' ) {
-                        console.log( 'Story ID: ' + d.qId + ' was deleted' )
-                      } else if( d.qType === 'masterobject' ) {
-                        console.log( 'Masterobject ID: ' + d.qId + ' was deleted' )
-                      }                      
-                      return null                                                        
-                    })
+              return obj.qType === 'sheet'|| obj.qType === 'story' || obj.qType === 'masterobject' || obj.qType === 'dimension' || obj.qType === 'measure' || obj.qType === 'snapshot'
+            }) //.then( function() {
+            Promise.all( allSheets.map(function( d ) {
+                    switch( d.qType ) {
+                      case "sheet":
+                      case "masterobject":
+                      case "story":
+                      case "snapshot":
+                        return app.destroyObject( d.qId ).then( function( delmsg ) {
+                          console.log( 'Sheet ID: ' + d.qId + ' and its objects was deleted' );
+                          console.log( delmsg )
+                          //return null                 
+                        })             
+                        break;
+                      case "dimension":
+                        return app.destroyDimension( d.qId ).then( function( delmsg ) {
+                          console.log( 'Dimension ID: ' + d.qId + ' was deleted' )
+                          console.log( delmsg )
+                          //return null                            
+                        })
+                        break;
+                      case "measure":
+                        return app.destroyMeasure( d.qId ).then( function( delmsg ) {
+                          console.log( 'Measure ID: ' + d.qId + ' was deleted' )
+                          console.log( delmsg )
+                          //return null                            
+                        })                    
+                        break;
+                    }
+                    return null
             })).then( function() {
                       
                       Promise.all(sheets.map(function(s) {
@@ -88,7 +102,7 @@ require(['jquery', 'qsocks'], function($, qsocks) {
                         });
                       })).then( function() {
 
-                        Promise.all(masterobjects.map(function(mo) {
+                        Promise.all(masterobjects.map(function( mo ) {
                           return app.createObject( mo.qProperty ).then( function( obj ) {
                             return obj.setFullPropertyTree( mo ).then( function( obj ) {
                               console.log( 'Masterobject: "' + mo.qProperty.qMetaDef.title + '" (' + mo.qProperty.qInfo.qId + ') with ' + mo.qChildren.length + ' children(s) was created' );
@@ -96,31 +110,69 @@ require(['jquery', 'qsocks'], function($, qsocks) {
                           });
 
                       })).then( function() {
-                        Promise.all(stories.map(function(st) {
+                        Promise.all(stories.map(function( st ) {
                           return app.createObject( st.qProperty ).then( function( obj ) {
                             return obj.setFullPropertyTree( st ).then( function( obj ) {
                               console.log( 'Story: "' + st.qProperty.qMetaDef.title + '" (' + st.qProperty.qInfo.qId + ') with ' + st.qChildren.length + ' sheet(s) was created' );
                             });
                           });
                         })).then( function() {
-                        
-                        
-                        
+                        Promise.all(dimensions.map(function( dim ) {
+                          return app.createDimension( dim ).then( function( obj ) {
+                            console.log( 'Dimension: "' + dim.qMetaDef.title + '" (' + dim.qInfo.qId + ') was created' );
+                          })
+                        })).then( function() {
+                        Promise.all(measures.map(function( measure ) {
+                          return app.createDimension( measure ).then( function( obj ) {
+                            console.log( 'Measure: "' + measure.qMetaDef.title + '" (' + measure.qInfo.qId + ') was created' );
+                          })
+                        })).then( function() {
+                        Promise.all(snapshots.map(function( sn ) {
+                          return app.createDimension( sn ).then( function( obj ) {                            
+                            console.log( 'Snapshot: "' + sn.qMetaDef.title + '" (' + sn.qInfo.qId + ') was created' );
+                          })
+                        })).then( function() {
+                          app.getConnections().then( function( connections ) {
+                            Promise.all(connections.map(function( dc ) {
+                              return app.deleteConnection( dc.qId ).then( function( obj ) {                     
+                                console.log( 'DataConnection: "' + dc.qName + '" (' + dc.qId + ') was deleted' );
+                              })
+                            })).then( function() {                                                        
+                            Promise.all(dataconnections.map(function( dc ) {
+                              return app.createConnection( dc.qConnection ).then( function( obj ) {                            
+                                console.log( 'DataConnection: "' + dc.qConnection.qName + '" (' + dc.qConnection.qId + ') was created' );
+                              })
+                            })).then( function() {                          
+                          var props = {};
+                          props.qTitle = properties.qTitle;
+                          props.qThumbnail = properties.qThumbnail;
+                          props.description = properties.description;
+                          props.dynamicColor = properties.dynamicColor;
+                                                                        
+                          app.setAppProperties( properties ).then( function() {
+                          console.log( 'App properties was set' );
                         console.log('All done')
                         app.doSave().then( function() {
                           console.log( 'Saved!' );
-                        }) 
-                      })
-                      })
+                        });
+                          });
+                        });
+                      });
+                          });
+                      });
+                        });
           });
         });         
       });
     });    
   });
   });
+  });
   })
-
-                      
+  });
+    })
+  })
+//})
                       
                       // }));     
   
@@ -179,5 +231,5 @@ require(['jquery', 'qsocks'], function($, qsocks) {
 					//    })					
 	// 	});
   // });  
-});
+  //});
 
