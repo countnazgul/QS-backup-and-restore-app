@@ -2,4 +2,7 @@ CreateApp.qext;
 CreateApp.html;
 CreateApp.js;
 CreateApp.css;
+jquery.dataTables.min.css;
 qsocks.bundle.js;
+serialize.bundle.js;
+jquery.dataTables.js;
