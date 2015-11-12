@@ -346,23 +346,28 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function($, qsocks, 
         })
     })
 
+//    Connect()
+//    function Connect() {
+//      if( main.app ) {
+//          main.global.connection.ws.terminate()
+//      }
 
+      qsocks.Connect(appConfig).then(function(global) {
+          return main.global = global;
+      }).then(function() {
+          return main.global.getDocList()
+      }).then(function(docList) {
+          for (var i = 0; i < docList.length; i++) {
+              $('#docList')
+                  .append($("<option></option>")
+                      .attr("value", docList[i].qDocId)
+                      .text(docList[i].qDocName));
+          }
 
-    qsocks.Connect(appConfig).then(function(global) {
-        return main.global = global;
-    }).then(function() {
-        return main.global.getDocList()
-    }).then(function(docList) {
-        for (var i = 0; i < docList.length; i++) {
-            $('#docList')
-                .append($("<option></option>")
-                    .attr("value", docList[i].qDocId)
-                    .text(docList[i].qDocName));
-        }
-
-        $('#loadingImg').css('visibility', 'hidden');
-        $('#open').prop('disabled', false);
-    })
+          $('#loadingImg').css('visibility', 'hidden');
+          $('#open').prop('disabled', false);
+      })
+//    }
 
     function GenerateTable() {
         var t = $('#resultTable').DataTable();
