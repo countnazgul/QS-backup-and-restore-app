@@ -26,7 +26,7 @@ function getBookmarks(app) {
                                                         properties.qBookMark = layout.qBookmark;
                                                         return properties;
                                                 });
-                                                
+
                                         });
                                 });
                         }));
@@ -66,12 +66,12 @@ function getDimensions(app) {
                 return list.getLayout().then(function (layout) {
                         return Promise.all(layout.qDimensionList.qItems.map(function (d) {
                                 return app.getDimension(d.qInfo.qId).then(function (dimension) {
-                                        return dimension.getProperties().then(function(properties) { 
+                                        return dimension.getProperties().then(function(properties) {
                                                 return {
                                                    qInfo: properties.qInfo,
                                                    qDim: properties.qDim,
                                                    qMetaDef: properties.qMetaDef
-					        }; 
+					        };
                                         });
                                 });
                         }));
@@ -86,11 +86,11 @@ var Promise = require('promise');
 function getFields(app) {
 
         return app.createSessionObject({
-            qFieldListDef: { 
-                    qShowSystem: true, 
-                    qShowHidden: true, 
-                    qShowSrcTables: true, 
-                    qShowSemantic: true 
+            qFieldListDef: {
+                    qShowSystem: true,
+                    qShowHidden: true,
+                    qShowSrcTables: true,
+                    qShowSemantic: true
             },
             qInfo: { qId: 'FieldList', qType: 'FieldList' }
         }).then(function (fields) {
@@ -124,7 +124,7 @@ function getList(app, objectType) {
 			return Promise.all(layout.qAppObjectList.qItems.map(function(d) {
 				return app.getObject(d.qInfo.qId).then(function (handle) {
 					return handle.getFullPropertyTree();
-				}); 
+				});
 			}));
 		});
 	});
@@ -221,23 +221,23 @@ var getConnections = require('./getDataConnections');
 
 /**
  * serializeApp
- * 
+ *
  * Accepts a qsocks app connection object and returns a promise.
  * Resolves a serialized app.
  */
 
-serializeAppBundle = 
+serializeAppBundle =
   function serializeApp(app, callback) {
     var objects = 0;
 	if(!app || typeof app.createSessionObject !== 'function') {
 		throw new Error('Expects a valid qsocks app connection')
 	};
-		
+
 	var appObj = {};
-	
+
 	// Generic Lists to be iterated over for qAppObjectListDef
 	var LISTS = [{'sheets': 'sheet'}, {'stories': 'story'}, {'masterobjects': 'masterobject'}];
-	
+
 	// Property name mapping against methods
 	var METHODS = {
 		dimensions: getDimensions,
@@ -248,18 +248,18 @@ serializeAppBundle =
 		fields: getFields,
 		dataconnections: getConnections
 	};
-	
+
 	return app.getAppProperties().then(function (properties) {
-			return appObj.properties = properties; 
+			return appObj.properties = properties;
 		})
 		.then(function () {
-		  	$( '#status' ).append( '<b>"Load script" received </b> <br/>' );
+		  	//$( '#status' ).append( '<b>"Load script" received </b> <br/>' );
 			return app.getScript().then(function (script) { return appObj.loadScript = script; })
 		})
 		.then(function () {
 			return Promise.all(LISTS.map(function (d, i) {
 				return getList(app, d[Object.keys(d)[0]])
-			})).then(function (data) { return LISTS.forEach(function(d, y) {   
+			})).then(function (data) { return LISTS.forEach(function(d, y) {
 			  var lists = Object.keys(d)[0];
 			  lists = lists.replace(lists[0], lists[0].toUpperCase());
         if( data[y].length > 0) {
@@ -268,42 +268,42 @@ serializeAppBundle =
                 objects += data[y][i].qChildren.length;
               }
            }
-			     $( '#status' ).append( '<b>"' + lists + '" received (' + data[y].length + ')</b> <br /> ' );
+			    // $( '#status' ).append( '<b>"' + lists + '" received (' + data[y].length + ')</b> <br /> ' );
         } else {
-          $( '#status' ).append( '"' + lists + '" received (' + data[y].length + ') <br /> ' );
+          //$( '#status' ).append( '"' + lists + '" received (' + data[y].length + ') <br /> ' );
         }
 			  appObj[Object.keys(d)[0]] = data[y] }); });
 		})
-		.then(function () {	
-			return Promise.all(Object.keys(METHODS).map(function(key, i) {					
-			    
+		.then(function () {
+			return Promise.all(Object.keys(METHODS).map(function(key, i) {
+
 				//$( '#status' ).append( '"' + keyDescr + '" received <br /> ' );
-				
+
 				return METHODS[key](app).then(function(data) {
-				  var keyDescr = key.replace(key[0], key[0].toUpperCase()); // returns Master 
-          
+				  var keyDescr = key.replace(key[0], key[0].toUpperCase()); // returns Master
+
           if( data.length > 0 ) {
-				      $( '#status' ).append( '<b>"' + keyDescr + '" received (' + data.length + ')</b> <br /> ' );
+				    //  $( '#status' ).append( '<b>"' + keyDescr + '" received (' + data.length + ')</b> <br /> ' );
           } else {
-              $( '#status' ).append( '"' + keyDescr + '" received (' + data.length + ') <br /> ' );
+              //$( '#status' ).append( '"' + keyDescr + '" received (' + data.length + ') <br /> ' );
           }
-				  return appObj[key] = data 
+				  return appObj[key] = data
 				});
-			}));		
+			}));
 		})
 		.then(function() {
           if( objects > 0 ) {
-				      $( '#status' ).append( '<b>"Objects" received (' + objects + ')</b> <br /> ' );
+				      //$( '#status' ).append( '<b>"Objects" received (' + objects + ')</b> <br /> ' );
           } else {
-              $( '#status' ).append( '<b>"Objects" received (' + objects + ')</b> <br /> ' );
-          }		  
+            //  $( '#status' ).append( '<b>"Objects" received (' + objects + ')</b> <br /> ' );
+          }
 			return appObj;
 		})
 		.nodeify(callback);
-		
+
 };
 module.exports = serializeAppBundle;
-  
+
 },{"./getBookmarks":2,"./getDataConnections":3,"./getDimensions":4,"./getFields":5,"./getList":6,"./getMeasures":7,"./getMediaList":8,"./getSnapshots":9,"promise":11}],11:[function(require,module,exports){
 'use strict';
 

@@ -1,13 +1,13 @@
 {
 	"type": "mashup",
 	"name": "CreateApp",
-	"version": "1.0.0",
-	"description": "Mashup template based on a Bootstrap with an image header",
-	"homepage": "",
-	"author": "",
+	"version": "0.7.0",
+	"description": "Bachup and restore QS app",
+	"homepage": "https://github.com/countnazgul/QS-import-serialized-app",
+	"author": "stefan.stoichev@gmail.com",
 	"keywords": "qlik-sense, mashup",
 	"license": "",
-	"repository": "",
+	"repository": "https://github.com/countnazgul/QS-import-serialized-app",
 	"dependencies": {
 		"qlik-sense": ">=2.1.x"
 	}
