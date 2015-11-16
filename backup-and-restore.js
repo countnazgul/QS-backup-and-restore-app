@@ -8,21 +8,21 @@ var me = {
 };
 
 require.config({
-    baseUrl: me.baseurl,
-    paths: {
-        qsocks: 'qsocks.bundle',
-        serializeApp: 'serialize.bundle',
-        dataTables: 'jquery.dataTables'
-    }
+  baseUrl: me.baseurl,
+  paths: {
+    qsocks: 'qsocks.bundle',
+    serializeApp: 'serialize.bundle',
+    dataTables: 'jquery.dataTables'
+  }
 });
 
 var main = {};
 
 require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function($, qsocks, serializeApp, DataTable) {
-    $('#open').prop('disabled', true);
-    $('#go').prop('disabled', true);
-    $('#serialize').prop('disabled', true);
-    $('#json').prop('disabled', true);
+      $('#open').prop('disabled', true);
+      $('#go').prop('disabled', true);
+      $('#serialize').prop('disabled', true);
+      $('#json').prop('disabled', true);
 
 
     var appInfos = [];
@@ -61,19 +61,25 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function($, qsocks, 
                 return main.app.getAllInfos()
             })
             .then(function(info) {
+                // console.log( info )
+                // for( var i = 0; i < info.qInfos.length; i++ ) {
+                //   console.log( info.qInfos[i].qType )
+                // }
+
                 appInfos = info;
                 main.app.getConnections().then(function(connections) {
-                    console.log(appInfos)
+                    // console.log(appInfos)
                     for (var i = 0; i < connections.length; i++) {
                         appInfos.qInfos.push({
                             qId: connections[i].qId,
                             qType: connections[i].qType
                         })
                     }
-                    console.log(appInfos);
+                    // console.log(appInfos);
                     $('#json').prop('disabled', false);
                     $('#loadingImg').css('visibility', 'hidden');
                     $('#serialize').prop('disabled', false);
+                    $( '#openDoc' ).text( '"' + selectedAppText + '"' + ' open' );
                 })
             })
     });
@@ -119,17 +125,17 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function($, qsocks, 
                             })
                         }
                         break;
-                    case "dataconnections":
-                        for (var i = 0; i < backupContent[name].length; i++) {
-                            backupInfos.push({
-                                info: {
-                                    qId: backupContent[name][i].qConnection.qId,
-                                    qType: backupContent[name][i].qConnection.qType
-                                },
-                                data: backupContent[name][i]
-                            })
-                        }
-                        break;
+                    // case "dataconnections":
+                    //     for (var i = 0; i < backupContent[name].length; i++) {
+                    //         backupInfos.push({
+                    //             info: {
+                    //                 qId: backupContent[name][i].qConnection.qId,
+                    //                 qType: backupContent[name][i].qConnection.qType
+                    //             },
+                    //             data: backupContent[name][i]
+                    //         })
+                    //     }
+                    //     break;
                 }
             }
 
@@ -193,6 +199,7 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function($, qsocks, 
                     return importData.push([d.qType, '', d.qId, 'delete']);
                 });;
             } else {
+                // console.log( d.qType )
                 return main.app.destroyObject(d.qId).then(function() {
                     return importData.push([d.qType, '', d.qId, 'delete']);
                 });
@@ -261,13 +268,15 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function($, qsocks, 
                         return importData.push(['masterobject', d.data.qProperty.qMetaDef.title, d.info.qId, 'modify']);
                     });
                 })
-            } else if (d.info.qType === 'folder') {
-                return main.app.modifyConnection(d.info.qId, d.data.qConnection.qName, d.data.qConnection.qConnectionString, d.data.qConnection.qType).then(function(msg) {
-                    return importData.push(['data connector', d.data.qConnection.qName, d.info.qId, 'modify']);
-                }).catch(function(error) {
-                    return console.log(error)
-                });
-            } else if (d.data.qProperty) {
+            }
+            //  else if (d.info.qType === 'folder') {
+            //     return main.app.modifyConnection(d.info.qId, d.data.qConnection.qName, d.data.qConnection.qConnectionString, d.data.qConnection.qType).then(function(msg) {
+            //         return importData.push(['data connector', d.data.qConnection.qName, d.info.qId, 'modify']);
+            //     }).catch(function(error) {
+            //         return console.log(error)
+            //     });
+            // }
+            else if (d.data.qProperty || d.info.qType != 'folder' || d.info.qType != 'internet' || d.info.qType != 'ODBC' || d.info.qType != 'OLEDB') {
                 return main.app.getObject(d.info.qId).then(function(obj) {
                     return obj.setFullPropertyTree(d.data).then(function(msg) {
                         return importData.push([d.info.qType, d.data.qProperty.qMetaDef.title, d.info.qId, 'modify']);
