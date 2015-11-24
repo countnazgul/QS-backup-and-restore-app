@@ -10,9 +10,9 @@ var me = {
 require.config({
     baseUrl: me.baseurl,
     paths: {
-        qsocks: 'qsocks.bundle',
-        serializeApp: 'serialize.bundle',
-        dataTables: 'jquery.dataTables'
+        qsocks: 'js/qsocks.bundle',
+        serializeApp: 'js/serialize.bundle',
+        dataTables: 'js/jquery.dataTables'
     }
 });
 
@@ -28,10 +28,8 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function ($, qsocks,
     var appInfos = [];
     var backupInfos = [];
 
-    var backupContent;
-    var loadScript, properties;
+    var backupContent, loadScript, properties;
 
-    var selectedApp;
     var status = {
         forUpdate: [],
         forDelete: [],
@@ -61,21 +59,16 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function ($, qsocks,
                 return main.app.getAllInfos()
             })
             .then(function (info) {
-                // console.log( info )
-                // for( var i = 0; i < info.qInfos.length; i++ ) {
-                //   console.log( info.qInfos[i].qType )
-                // }
 
                 appInfos = info;
                 main.app.getConnections().then(function (connections) {
-                    // console.log(appInfos)
                     for (var i = 0; i < connections.length; i++) {
                         appInfos.qInfos.push({
                             qId: connections[i].qId,
                             qType: connections[i].qType
                         })
                     }
-                    // console.log(appInfos);
+
                     $('#json').prop('disabled', false);
                     $('#loadingImg').css('visibility', 'hidden');
                     $('#serialize').prop('disabled', false);
@@ -151,7 +144,10 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function ($, qsocks,
                 if (present == true) {
                     status.forUpdate.push(d)
                 } else {
-                    status.forDelete.push(appInfos.qInfos[i])
+                    
+                    if( appInfos.qInfos[i].qType != 'folder' && appInfos.qInfos[i].qType != 'internet' && appInfos.qInfos[i].qType != 'ODBC' && appInfos.qInfos[i].qType != 'OLEDB' ) {
+                        status.forDelete.push(appInfos.qInfos[i])
+                    }
                 }
             }
 
@@ -276,7 +272,7 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function ($, qsocks,
                 //         return console.log(error)
                 //     });
                 // }
-                else if (d.data.qProperty || d.info.qType != 'folder' || d.info.qType != 'internet' || d.info.qType != 'ODBC' || d.info.qType != 'OLEDB') {
+                else if (d.data.qProperty && d.info.qType != 'folder' && d.info.qType != 'internet' && d.info.qType != 'ODBC' && d.info.qType != 'OLEDB') {
                     return main.app.getObject(d.info.qId).then(function (obj) {
                         return obj.setFullPropertyTree(d.data).then(function (msg) {
                             return importData.push([d.info.qType, d.data.qProperty.qMetaDef.title, d.info.qId, 'modify']);
@@ -334,17 +330,11 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function ($, qsocks,
 
 
         deleteObjects().then(function () {
-            //            console.log('all deleted')
             insertObjects().then(function () {
-                //                console.log('all inserted')
                 updateObjects().then(function () {
-                    //                    console.log('all updated')
                     setScript().then(function () {
-                        //                        console.log('Load Script altered');
                         setAppProperties().then(function () {
-                            //                            console.log('App properties updated');
                             main.app.doSave().then(function () {
-                                //                                console.log('Saved');
                                 GenerateTable();
                                 $('#loadingImg').css('visibility', 'hidden');
                             })
@@ -376,7 +366,6 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function ($, qsocks,
         $('#loadingImg').css('visibility', 'hidden');
         $('#open').prop('disabled', false);
     })
-    //    }
 
     function GenerateTable() {
         var t = $('#resultTable').DataTable();

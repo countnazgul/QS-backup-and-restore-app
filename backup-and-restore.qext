@@ -1,9 +1,9 @@
 {
 	"type": "mashup",
 	"name": "Backup and Restore",
-	"version": "0.8.1",
+	"version": "0.8.2",
 	"description": "Bachup and restore QS app",
-	"preview": "preview.png",
+	"preview": "images/preview.png",
 	"homepage": "https://github.com/countnazgul/QS-backup-and-restore-app",
 	"author": "stefan.stoichev@gmail.com",
 	"keywords": "qlik-sense, mashup",
