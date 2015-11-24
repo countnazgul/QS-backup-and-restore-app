@@ -58,3 +58,5 @@ After the restore process is finished the app will be saved to preserve the chan
 * That's it! If you have the app already open just refresh the browser tabs where this app is open.
 
 Please report and issues in the [Github issue tracker](https://github.com/countnazgul/QS-backup-and-restore-app/issues)
+
+![Screenshot](https://raw.githubusercontent.com/countnazgul/QS-backup-and-restore-app/master/images/backup_and_restore.png)
