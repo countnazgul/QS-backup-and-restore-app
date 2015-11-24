@@ -19,6 +19,7 @@ This mashup provide both export the app to json and import the json file.
 * fields
 
 #### Installation
+***Workd with QS version >=2.1.1***
 * QS Desktop - unzip the release in `C:\Users\[USERNAME]\Documents\Qlik\Sense\Extensions`
 * QS Server
   - login to QMC
