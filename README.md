@@ -18,6 +18,16 @@ This mashup provide both export the app to json and import the json file.
 * load script
 * fields
 
+#### Installation
+* QS Desktop - unzip the release in `C:\Users\[USERNAME]\Documents\Qlik\Sense\Extensions`
+* QS Server
+  - login to QMC
+  - naviagete to "Extensions"
+  - press "Improt" button (bottom of the page)
+  - pick the release zip file
+  - press "Import" button
+  - (verify that the import process finished without errors from the notification popup)
+
 #### Backup
 During the export the app is not changed in any way. The generated file will be automatically downloaded to your download folder.
 
