@@ -6,12 +6,12 @@ var genericDimension = require('./lib/GenericDimension');
 var genericMeasure = require('./lib/GenericMeasure');
 var genericObject = require('./lib/GenericObject');
 var global = require('./lib/global');
-var variable = require('./lib/variable');
+var genericVariable = require('./lib/GenericVariable');
 
 var WebSocket = require('ws');
 var Promise = require("promise");
 
-var VERSION = '2.1.5';
+var VERSION = '2.1.10';
 
 var qsocks = {
 	version: VERSION,
@@ -22,7 +22,7 @@ var qsocks = {
 	GenericMeasure: genericMeasure,
 	GenericObject: genericObject,
 	Global: global,
-	Variable: variable
+	GenericVariable: genericVariable
 };
 
 function Connect(config) {
@@ -40,7 +40,8 @@ function Connect(config) {
 		cfg.ticket = config.ticket || false;
 		cfg.key = config.key;
 		cfg.cert = config.cert;		
-		cfg.ca = config.ca;	
+		cfg.ca = config.ca;
+		cfg.identity = config.identity;
 	}
 
 	return new Promise(function (resolve, reject) {
@@ -87,9 +88,10 @@ function Connection(config) {
 	config.prefix = prefix;
 		
 	var suffix = config.appname ? 'app/' + config.appname : 'app/%3Ftransient%3D';
+	var identity = (config && config.identity) ? '/identity/' + config.identity : '';
 	var ticket = config.ticket ? '?qlikTicket=' + config.ticket : '';
 
-	this.ws = new WebSocket(isSecure + host + port + prefix + suffix + ticket, null, config);
+	this.ws = new WebSocket(isSecure + host + port + prefix + suffix + identity + ticket, null, config);
 
 	this.ws.onopen = function (ev) {
 		if (done) {
@@ -171,7 +173,7 @@ Connection.prototype.close = function() {
 	return this.ws.close();
 };
 module.exports = qsocks;
-},{"./lib/GenericBookmark":2,"./lib/GenericDimension":3,"./lib/GenericMeasure":4,"./lib/GenericObject":5,"./lib/doc":6,"./lib/field":7,"./lib/global":8,"./lib/variable":9,"promise":13,"ws":23}],2:[function(require,module,exports){
+},{"./lib/GenericBookmark":2,"./lib/GenericDimension":3,"./lib/GenericMeasure":4,"./lib/GenericObject":5,"./lib/GenericVariable":6,"./lib/doc":7,"./lib/field":8,"./lib/global":9,"promise":13,"ws":23}],2:[function(require,module,exports){
 function GenericBookmark(connection, handle) {
     this.connection = connection;
     this.handle = handle;
@@ -516,6 +518,70 @@ GenericObject.prototype.unPublish = function() {
 };
 module.exports = GenericObject;
 },{}],6:[function(require,module,exports){
+function GenericVariable(connection, handle) {
+    this.connection = connection;
+    this.handle = handle;
+}
+GenericVariable.prototype.getProperties = function() {
+    return this.connection.ask(this.handle, 'GetProperties', arguments).then(function(msg) {
+        return msg.qProp;
+    });
+};
+
+// API has been reworked in 2.1 to align with the other generic objects structure
+GenericVariable.prototype.applyPatches = function(Patches) {
+    return this.connection.ask(this.handle, 'ApplyPatches', arguments);
+};
+GenericVariable.prototype.getInfo = function() {
+    return this.connection.ask(this.handle, 'GetNxProperties', arguments).then(function(msg) {
+        return msg.qResult;
+    });
+};
+GenericVariable.prototype.getLayout = function() {
+    return this.connection.ask(this.handle, 'GetLayout', arguments).then(function(msg) {
+        return msg.qLayout;
+    });
+};
+GenericVariable.prototype.publish = function() {
+    return this.connection.ask(this.handle, 'Publish', arguments);
+};
+GenericVariable.prototype.unPublish = function() {
+    return this.connection.ask(this.handle, 'UnPublish', arguments);
+};
+GenericVariable.prototype.setProperties = function(Prop) {
+    return this.connection.ask(this.handle, 'SetProperties', arguments);
+};
+GenericVariable.prototype.setDualValue  = function(Text, Num) {
+    return this.connection.ask(this.handle, 'SetDualValue', arguments);
+};
+GenericVariable.prototype.setNumValue  = function(Value) {
+    return this.connection.ask(this.handle, 'SetNumValue', arguments);
+};
+GenericVariable.prototype.setStringValue  = function(String) {
+    return this.connection.ask(this.handle, 'SetStringValue', arguments);
+};
+
+// Deprecated Methods
+GenericVariable.prototype.forceContent = function() {
+    return new Error('This method was deprecated in 2.1. Replaced with SetProperties');
+};
+GenericVariable.prototype.getContent = function() {
+    return new Error('This method was deprecated in 2.1. Replaced with GetProperties');
+};
+GenericVariable.prototype.getNxProperties = function() {
+    return new Error('This method was deprecated in 2.1. Replaced with GetProperties');
+};
+GenericVariable.prototype.getRawContent = function() {
+    return new Error('This method was deprecated in 2.1. Replaced with GetProperties');
+};
+GenericVariable.prototype.setContent = function() {
+    return new Error('This method was deprecated in 2.1. Replaced with SetProperties');
+};
+GenericVariable.prototype.setNxProperties = function() {
+    return new Error('This method was deprecated in 2.1. Replaced with GetProperties');
+};
+module.exports = GenericVariable;
+},{}],7:[function(require,module,exports){
 function Doc(connection, handle) {
     this.connection = connection;
     this.handle = handle;
@@ -706,11 +772,6 @@ Doc.prototype.createSessionObject = function(Prop) {
 };
 Doc.prototype.destroySessionObject = function(Id) {
     return this.connection.ask(this.handle, 'DestroySessionObject', arguments).then(function(msg) {
-        return msg.qSuccess;
-    });
-};
-Doc.prototype.destroyObject = function(Id) {
-    return this.connection.ask(this.handle, 'DestroyObject', arguments).then(function(msg) {
         return msg.qSuccess;
     });
 };
@@ -1040,7 +1101,7 @@ Doc.prototype.getVariableById = function(Id) {
 };
 Doc.prototype.getVariableByName  = function(Name) {
     var connection = this.connection;
-    return this.connection.ask(this.handle, 'GetVariableByName ', arguments).then(function(msg) {
+    return this.connection.ask(this.handle, 'GetVariableByName', arguments).then(function(msg) {
         return connection.create(msg.qReturn);
     });
 };
@@ -1074,7 +1135,8 @@ Doc.prototype.removeVariable = function(Name) {
     return new Error('This method was deprecated in 2.1. Replaced with DestroyVariableById, DestroyVariableByName and DestroySessionVariable');
 };
 module.exports = Doc;
-},{}],7:[function(require,module,exports){
+
+},{}],8:[function(require,module,exports){
 function Field(connection, handle) {
     this.connection = connection;
     this.handle = handle;
@@ -1161,7 +1223,7 @@ Field.prototype.setNxProperties = function(Properties) {
     return this.connection.ask(this.handle, 'SetNxProperties', arguments);
 };
 module.exports = Field;
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 function Global(connection, handle) {
     this.connection = connection;
     this.handle = handle;
@@ -1394,70 +1456,6 @@ Global.prototype.qvVersion = function() {
 };
 
 module.exports = Global;
-},{}],9:[function(require,module,exports){
-function Variable(connection, handle) {
-    this.connection = connection;
-    this.handle = handle;
-}
-Variable.prototype.getProperties = function() {
-    return this.connection.ask(this.handle, 'GetProperties', arguments).then(function(msg) {
-        return msg.qReturn;
-    });
-};
-
-// API has been reworked in 2.1 to align with the other generic objects structure
-Variable.prototype.applyPatches = function(Patches) {
-    return this.connection.ask(this.handle, 'ApplyPatches', arguments);
-};
-Variable.prototype.getInfo = function() {
-    return this.connection.ask(this.handle, 'GetNxProperties', arguments).then(function(msg) {
-        return msg.qResult;
-    });
-};
-Variable.prototype.getLayout = function() {
-    return this.connection.ask(this.handle, 'GetLayout', arguments).then(function(msg) {
-        return msg.qLayout;
-    });
-};
-Variable.prototype.publish = function() {
-    return this.connection.ask(this.handle, 'Publish', arguments);
-};
-Variable.prototype.unPublish = function() {
-    return this.connection.ask(this.handle, 'UnPublish', arguments);
-};
-Variable.prototype.setProperties = function(Prop) {
-    return this.connection.ask(this.handle, 'SetProperties', arguments);
-};
-Variable.prototype.setDualValue  = function(Text, Num) {
-    return this.connection.ask(this.handle, 'SetDualValue', arguments);
-};
-Variable.prototype.setNumValue  = function(Value) {
-    return this.connection.ask(this.handle, 'SetNumValue', arguments);
-};
-Variable.prototype.setStringValue  = function(String) {
-    return this.connection.ask(this.handle, 'SetStringValue', arguments);
-};
-
-// Deprecated Methods
-Variable.prototype.forceContent = function() {
-    return new Error('This method was deprecated in 2.1. Replaced with SetProperties');
-};
-Variable.prototype.getContent = function() {
-    return new Error('This method was deprecated in 2.1. Replaced with GetProperties');
-};
-Variable.prototype.getNxProperties = function() {
-    return new Error('This method was deprecated in 2.1. Replaced with GetProperties');
-};
-Variable.prototype.getRawContent = function() {
-    return new Error('This method was deprecated in 2.1. Replaced with GetProperties');
-};
-Variable.prototype.setContent = function() {
-    return new Error('This method was deprecated in 2.1. Replaced with SetProperties');
-};
-Variable.prototype.setNxProperties = function() {
-    return new Error('This method was deprecated in 2.1. Replaced with GetProperties');
-};
-module.exports = Variable;
 },{}],10:[function(require,module,exports){
 /*global define:false require:false */
 module.exports = (function(){
@@ -1955,13 +1953,13 @@ function Promise(fn) {
   if (typeof fn !== 'function') {
     throw new TypeError('not a function');
   }
-  this._32 = 0;
-  this._8 = null;
-  this._89 = [];
+  this._37 = 0;
+  this._12 = null;
+  this._59 = [];
   if (fn === noop) return;
   doResolve(fn, this);
 }
-Promise._83 = noop;
+Promise._99 = noop;
 
 Promise.prototype.then = function(onFulfilled, onRejected) {
   if (this.constructor !== Promise) {
@@ -1969,7 +1967,6 @@ Promise.prototype.then = function(onFulfilled, onRejected) {
   }
   var res = new Promise(noop);
   handle(this, new Handler(onFulfilled, onRejected, res));
-  //console.log(msg)
   return res;
 };
 
@@ -1981,24 +1978,24 @@ function safeThen(self, onFulfilled, onRejected) {
   });
 };
 function handle(self, deferred) {
-  while (self._32 === 3) {
-    self = self._8;
+  while (self._37 === 3) {
+    self = self._12;
   }
-  if (self._32 === 0) {
-    self._89.push(deferred);
+  if (self._37 === 0) {
+    self._59.push(deferred);
     return;
   }
   asap(function() {
-    var cb = self._32 === 1 ? deferred.onFulfilled : deferred.onRejected;
+    var cb = self._37 === 1 ? deferred.onFulfilled : deferred.onRejected;
     if (cb === null) {
-      if (self._32 === 1) {
-        resolve(deferred.promise, self._8);
+      if (self._37 === 1) {
+        resolve(deferred.promise, self._12);
       } else {
-        reject(deferred.promise, self._8);
+        reject(deferred.promise, self._12);
       }
       return;
     }
-    var ret = tryCallOne(cb, self._8);
+    var ret = tryCallOne(cb, self._12);
     if (ret === IS_ERROR) {
       reject(deferred.promise, LAST_ERROR);
     } else {
@@ -2026,8 +2023,8 @@ function resolve(self, newValue) {
       then === self.then &&
       newValue instanceof Promise
     ) {
-      self._32 = 3;
-      self._8 = newValue;
+      self._37 = 3;
+      self._12 = newValue;
       finale(self);
       return;
     } else if (typeof then === 'function') {
@@ -2035,21 +2032,21 @@ function resolve(self, newValue) {
       return;
     }
   }
-  self._32 = 1;
-  self._8 = newValue;
+  self._37 = 1;
+  self._12 = newValue;
   finale(self);
 }
 
 function reject(self, newValue) {
-  self._32 = 2;
-  self._8 = newValue;
+  self._37 = 2;
+  self._12 = newValue;
   finale(self);
 }
 function finale(self) {
-  for (var i = 0; i < self._89.length; i++) {
-    handle(self, self._89[i]);
+  for (var i = 0; i < self._59.length; i++) {
+    handle(self, self._59[i]);
   }
-  self._89 = null;
+  self._59 = null;
 }
 
 function Handler(onFulfilled, onRejected, promise){
@@ -2102,7 +2099,6 @@ Promise.prototype.done = function (onFulfilled, onRejected) {
 //This file contains the ES6 extensions to the core Promises/A+ API
 
 var Promise = require('./core.js');
-var asap = require('asap/raw');
 
 module.exports = Promise;
 
@@ -2116,9 +2112,9 @@ var ZERO = valuePromise(0);
 var EMPTYSTRING = valuePromise('');
 
 function valuePromise(value) {
-  var p = new Promise(Promise._83);
-  p._32 = 1;
-  p._8 = value;
+  var p = new Promise(Promise._99);
+  p._37 = 1;
+  p._12 = value;
   return p;
 }
 Promise.resolve = function (value) {
@@ -2155,11 +2151,11 @@ Promise.all = function (arr) {
     function res(i, val) {
       if (val && (typeof val === 'object' || typeof val === 'function')) {
         if (val instanceof Promise && val.then === Promise.prototype.then) {
-          while (val._32 === 3) {
-            val = val._8;
+          while (val._37 === 3) {
+            val = val._12;
           }
-          if (val._32 === 1) return res(i, val._8);
-          if (val._32 === 2) reject(val._8);
+          if (val._37 === 1) return res(i, val._12);
+          if (val._37 === 2) reject(val._12);
           val.then(function (val) {
             res(i, val);
           }, reject);
@@ -2206,7 +2202,7 @@ Promise.prototype['catch'] = function (onRejected) {
   return this.then(null, onRejected);
 };
 
-},{"./core.js":14,"asap/raw":22}],17:[function(require,module,exports){
+},{"./core.js":14}],17:[function(require,module,exports){
 'use strict';
 
 var Promise = require('./core.js');
@@ -2250,11 +2246,9 @@ Promise.denodeify = function (fn, argumentCount) {
   argumentCount = argumentCount || Infinity;
   return function () {
     var self = this;
-    var args = Array.prototype.slice.call(arguments);
+    var args = Array.prototype.slice.call(arguments, 0,
+        argumentCount > 0 ? argumentCount : 0);
     return new Promise(function (resolve, reject) {
-      while (args.length && args.length > argumentCount) {
-        args.pop();
-      }
       args.push(function (err, res) {
         if (err) reject(err);
         else resolve(res);

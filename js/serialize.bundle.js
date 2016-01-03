@@ -2,12 +2,11 @@
 'use strict';
 
 module.exports = require('./lib/serializeapp');
-var serializeAppBundle;
-},{"./lib/serializeapp":10}],2:[function(require,module,exports){
+},{"./lib/serializeapp":11}],2:[function(require,module,exports){
 var Promise = require('promise');
 
 function getBookmarks(app) {
-		//return null;
+
         return app.createSessionObject({
                 qBookmarkListDef: {
                         qType: 'bookmark',
@@ -23,7 +22,8 @@ function getBookmarks(app) {
                                 return app.getBookmark(d.qInfo.qId).then(function (bookmark) {
                                         return bookmark.getProperties().then(function(properties) {
                                                return bookmark.getLayout().then(function(layout) {
-                                                        properties.qBookMark = layout.qBookmark;
+                                                        properties.qData = properties.qData || {};
+                                                        properties.qData.qBookMark = layout.qBookmark;
                                                         return properties;
                                                 });
 
@@ -36,7 +36,7 @@ function getBookmarks(app) {
 };
 
 module.exports = getBookmarks;
-},{"promise":11}],3:[function(require,module,exports){
+},{"promise":12}],3:[function(require,module,exports){
 var Promise = require('promise');
 
 function getDataConnections(app) {
@@ -49,7 +49,7 @@ function getDataConnections(app) {
 };
 
 module.exports = getDataConnections;
-},{"promise":11}],4:[function(require,module,exports){
+},{"promise":12}],4:[function(require,module,exports){
 var Promise = require('promise');
 
 function getDimensions(app) {
@@ -80,7 +80,7 @@ function getDimensions(app) {
 };
 
 module.exports = getDimensions;
-},{"promise":11}],5:[function(require,module,exports){
+},{"promise":12}],5:[function(require,module,exports){
 var Promise = require('promise');
 
 function getFields(app) {
@@ -102,7 +102,7 @@ function getFields(app) {
 };
 
 module.exports = getFields;
-},{"promise":11}],6:[function(require,module,exports){
+},{"promise":12}],6:[function(require,module,exports){
 var Promise = require('promise');
 
 function getList(app, objectType) {
@@ -132,7 +132,7 @@ function getList(app, objectType) {
 };
 
 module.exports = getList;
-},{"promise":11}],7:[function(require,module,exports){
+},{"promise":12}],7:[function(require,module,exports){
 var Promise = require('promise');
 
 function getMeasures(app) {
@@ -156,7 +156,7 @@ function getMeasures(app) {
         });
 };
 module.exports = getMeasures;
-},{"promise":11}],8:[function(require,module,exports){
+},{"promise":12}],8:[function(require,module,exports){
 function getMediaList(app) {
         return app.createSessionObject({
 			qInfo: {
@@ -201,7 +201,36 @@ function getSnapshots(app) {
 };
 
 module.exports = getSnapshots;
-},{"promise":11}],10:[function(require,module,exports){
+},{"promise":12}],10:[function(require,module,exports){
+var Promise = require('promise');
+
+function getVariables(app) {
+
+        return app.createSessionObject({
+                qVariableListDef: {
+                        qType: 'variable',
+			qShowReserved: false,
+			qShowConfig: false,
+                        qData: {
+                                info: '/qDimInfos'
+                        },
+                        qMeta: {}
+                },
+                qInfo: { qId: "VariableList", qType: "VariableList" }
+        }).then(function (list) {
+                return list.getLayout().then(function (layout) {
+                        return Promise.all(layout.qVariableList.qItems.map(function (d) {
+                                return app.getVariableById(d.qInfo.qId).then(function (variable) {
+                                        return variable.getProperties().then(function(properties) { return properties; });
+                                });
+                        }));
+                });
+        });
+
+};
+
+module.exports = getVariables;
+},{"promise":12}],11:[function(require,module,exports){
 /**
  * Node Modules
  */
@@ -218,6 +247,7 @@ var getMediaList = require('./getMediaList');
 var getSnapshots = require('./getSnapshots');
 var getFields = require('./getFields');
 var getConnections = require('./getDataConnections');
+var getVariables = require('./getVariables');
 
 /**
  * serializeApp
@@ -225,10 +255,8 @@ var getConnections = require('./getDataConnections');
  * Accepts a qsocks app connection object and returns a promise.
  * Resolves a serialized app.
  */
-
 serializeAppBundle =
-  function serializeApp(app, callback) {
-    var objects = 0;
+function serializeApp(app, callback) {
 	if(!app || typeof app.createSessionObject !== 'function') {
 		throw new Error('Expects a valid qsocks app connection')
 	};
@@ -246,70 +274,40 @@ serializeAppBundle =
 		embeddedmedia: getMediaList,
 		snapshots: getSnapshots,
 		fields: getFields,
-		dataconnections: getConnections
+		dataconnections: getConnections,
+		variables: getVariables
 	};
 
 	return app.getAppProperties().then(function (properties) {
 			return appObj.properties = properties;
 		})
 		.then(function () {
-		  	//$( '#status' ).append( '<b>"Load script" received </b> <br/>' );
 			return app.getScript().then(function (script) { return appObj.loadScript = script; })
 		})
 		.then(function () {
 			return Promise.all(LISTS.map(function (d, i) {
 				return getList(app, d[Object.keys(d)[0]])
-			})).then(function (data) { return LISTS.forEach(function(d, y) {
-			  var lists = Object.keys(d)[0];
-			  lists = lists.replace(lists[0], lists[0].toUpperCase());
-        if( data[y].length > 0) {
-           if( lists === 'Sheets' ) {
-              for( var i = 0; i < data[y].length; i ++ ) {
-                objects += data[y][i].qChildren.length;
-              }
-           }
-			    // $( '#status' ).append( '<b>"' + lists + '" received (' + data[y].length + ')</b> <br /> ' );
-        } else {
-          //$( '#status' ).append( '"' + lists + '" received (' + data[y].length + ') <br /> ' );
-        }
-			  appObj[Object.keys(d)[0]] = data[y] }); });
+			})).then(function (data) { return LISTS.forEach(function(d, y) { appObj[Object.keys(d)[0]] = data[y] }); });
 		})
 		.then(function () {
 			return Promise.all(Object.keys(METHODS).map(function(key, i) {
-
-				//$( '#status' ).append( '"' + keyDescr + '" received <br /> ' );
-
-				return METHODS[key](app).then(function(data) {
-				  var keyDescr = key.replace(key[0], key[0].toUpperCase()); // returns Master
-
-          if( data.length > 0 ) {
-				    //  $( '#status' ).append( '<b>"' + keyDescr + '" received (' + data.length + ')</b> <br /> ' );
-          } else {
-              //$( '#status' ).append( '"' + keyDescr + '" received (' + data.length + ') <br /> ' );
-          }
-				  return appObj[key] = data
-				});
+				return METHODS[key](app).then(function(data) { return appObj[key] = data });
 			}));
 		})
 		.then(function() {
-          if( objects > 0 ) {
-				      //$( '#status' ).append( '<b>"Objects" received (' + objects + ')</b> <br /> ' );
-          } else {
-            //  $( '#status' ).append( '<b>"Objects" received (' + objects + ')</b> <br /> ' );
-          }
 			return appObj;
 		})
 		.nodeify(callback);
 
 };
+//module.exports = serializeApp;
 module.exports = serializeAppBundle;
-
-},{"./getBookmarks":2,"./getDataConnections":3,"./getDimensions":4,"./getFields":5,"./getList":6,"./getMeasures":7,"./getMediaList":8,"./getSnapshots":9,"promise":11}],11:[function(require,module,exports){
+},{"./getBookmarks":2,"./getDataConnections":3,"./getDimensions":4,"./getFields":5,"./getList":6,"./getMeasures":7,"./getMediaList":8,"./getSnapshots":9,"./getVariables":10,"promise":12}],12:[function(require,module,exports){
 'use strict';
 
 module.exports = require('./lib')
 
-},{"./lib":16}],12:[function(require,module,exports){
+},{"./lib":17}],13:[function(require,module,exports){
 'use strict';
 
 var asap = require('asap/raw');
@@ -370,13 +368,16 @@ function Promise(fn) {
   if (typeof fn !== 'function') {
     throw new TypeError('not a function');
   }
-  this._37 = 0;
-  this._12 = null;
-  this._59 = [];
+  this._45 = 0;
+  this._81 = 0;
+  this._65 = null;
+  this._54 = null;
   if (fn === noop) return;
   doResolve(fn, this);
 }
-Promise._99 = noop;
+Promise._10 = null;
+Promise._97 = null;
+Promise._61 = noop;
 
 Promise.prototype.then = function(onFulfilled, onRejected) {
   if (this.constructor !== Promise) {
@@ -395,24 +396,41 @@ function safeThen(self, onFulfilled, onRejected) {
   });
 };
 function handle(self, deferred) {
-  while (self._37 === 3) {
-    self = self._12;
+  while (self._81 === 3) {
+    self = self._65;
   }
-  if (self._37 === 0) {
-    self._59.push(deferred);
+  if (Promise._10) {
+    Promise._10(self);
+  }
+  if (self._81 === 0) {
+    if (self._45 === 0) {
+      self._45 = 1;
+      self._54 = deferred;
+      return;
+    }
+    if (self._45 === 1) {
+      self._45 = 2;
+      self._54 = [self._54, deferred];
+      return;
+    }
+    self._54.push(deferred);
     return;
   }
+  handleResolved(self, deferred);
+}
+
+function handleResolved(self, deferred) {
   asap(function() {
-    var cb = self._37 === 1 ? deferred.onFulfilled : deferred.onRejected;
+    var cb = self._81 === 1 ? deferred.onFulfilled : deferred.onRejected;
     if (cb === null) {
-      if (self._37 === 1) {
-        resolve(deferred.promise, self._12);
+      if (self._81 === 1) {
+        resolve(deferred.promise, self._65);
       } else {
-        reject(deferred.promise, self._12);
+        reject(deferred.promise, self._65);
       }
       return;
     }
-    var ret = tryCallOne(cb, self._12);
+    var ret = tryCallOne(cb, self._65);
     if (ret === IS_ERROR) {
       reject(deferred.promise, LAST_ERROR);
     } else {
@@ -440,8 +458,8 @@ function resolve(self, newValue) {
       then === self.then &&
       newValue instanceof Promise
     ) {
-      self._37 = 3;
-      self._12 = newValue;
+      self._81 = 3;
+      self._65 = newValue;
       finale(self);
       return;
     } else if (typeof then === 'function') {
@@ -449,21 +467,30 @@ function resolve(self, newValue) {
       return;
     }
   }
-  self._37 = 1;
-  self._12 = newValue;
+  self._81 = 1;
+  self._65 = newValue;
   finale(self);
 }
 
 function reject(self, newValue) {
-  self._37 = 2;
-  self._12 = newValue;
+  self._81 = 2;
+  self._65 = newValue;
+  if (Promise._97) {
+    Promise._97(self, newValue);
+  }
   finale(self);
 }
 function finale(self) {
-  for (var i = 0; i < self._59.length; i++) {
-    handle(self, self._59[i]);
+  if (self._45 === 1) {
+    handle(self, self._54);
+    self._54 = null;
   }
-  self._59 = null;
+  if (self._45 === 2) {
+    for (var i = 0; i < self._54.length; i++) {
+      handle(self, self._54[i]);
+    }
+    self._54 = null;
+  }
 }
 
 function Handler(onFulfilled, onRejected, promise){
@@ -495,7 +522,7 @@ function doResolve(fn, promise) {
   }
 }
 
-},{"asap/raw":19}],13:[function(require,module,exports){
+},{"asap/raw":21}],14:[function(require,module,exports){
 'use strict';
 
 var Promise = require('./core.js');
@@ -510,7 +537,7 @@ Promise.prototype.done = function (onFulfilled, onRejected) {
   });
 };
 
-},{"./core.js":12}],14:[function(require,module,exports){
+},{"./core.js":13}],15:[function(require,module,exports){
 'use strict';
 
 //This file contains the ES6 extensions to the core Promises/A+ API
@@ -529,9 +556,9 @@ var ZERO = valuePromise(0);
 var EMPTYSTRING = valuePromise('');
 
 function valuePromise(value) {
-  var p = new Promise(Promise._99);
-  p._37 = 1;
-  p._12 = value;
+  var p = new Promise(Promise._61);
+  p._81 = 1;
+  p._65 = value;
   return p;
 }
 Promise.resolve = function (value) {
@@ -568,11 +595,11 @@ Promise.all = function (arr) {
     function res(i, val) {
       if (val && (typeof val === 'object' || typeof val === 'function')) {
         if (val instanceof Promise && val.then === Promise.prototype.then) {
-          while (val._37 === 3) {
-            val = val._12;
+          while (val._81 === 3) {
+            val = val._65;
           }
-          if (val._37 === 1) return res(i, val._12);
-          if (val._37 === 2) reject(val._12);
+          if (val._81 === 1) return res(i, val._65);
+          if (val._81 === 2) reject(val._65);
           val.then(function (val) {
             res(i, val);
           }, reject);
@@ -619,7 +646,7 @@ Promise.prototype['catch'] = function (onRejected) {
   return this.then(null, onRejected);
 };
 
-},{"./core.js":12}],15:[function(require,module,exports){
+},{"./core.js":13}],16:[function(require,module,exports){
 'use strict';
 
 var Promise = require('./core.js');
@@ -637,7 +664,7 @@ Promise.prototype['finally'] = function (f) {
   });
 };
 
-},{"./core.js":12}],16:[function(require,module,exports){
+},{"./core.js":13}],17:[function(require,module,exports){
 'use strict';
 
 module.exports = require('./core.js');
@@ -645,8 +672,9 @@ require('./done.js');
 require('./finally.js');
 require('./es6-extensions.js');
 require('./node-extensions.js');
+require('./synchronous.js');
 
-},{"./core.js":12,"./done.js":13,"./es6-extensions.js":14,"./finally.js":15,"./node-extensions.js":17}],17:[function(require,module,exports){
+},{"./core.js":13,"./done.js":14,"./es6-extensions.js":15,"./finally.js":16,"./node-extensions.js":18,"./synchronous.js":19}],18:[function(require,module,exports){
 'use strict';
 
 // This file contains then/promise specific extensions that are only useful
@@ -660,29 +688,88 @@ module.exports = Promise;
 /* Static Functions */
 
 Promise.denodeify = function (fn, argumentCount) {
-  argumentCount = argumentCount || Infinity;
-  return function () {
-    var self = this;
-    var args = Array.prototype.slice.call(arguments, 0,
-        argumentCount > 0 ? argumentCount : 0);
-    return new Promise(function (resolve, reject) {
-      args.push(function (err, res) {
-        if (err) reject(err);
-        else resolve(res);
-      })
-      var res = fn.apply(self, args);
-      if (res &&
-        (
-          typeof res === 'object' ||
-          typeof res === 'function'
-        ) &&
-        typeof res.then === 'function'
-      ) {
-        resolve(res);
-      }
-    })
+  if (
+    typeof argumentCount === 'number' && argumentCount !== Infinity
+  ) {
+    return denodeifyWithCount(fn, argumentCount);
+  } else {
+    return denodeifyWithoutCount(fn);
   }
 }
+
+var callbackFn = (
+  'function (err, res) {' +
+  'if (err) { rj(err); } else { rs(res); }' +
+  '}'
+);
+function denodeifyWithCount(fn, argumentCount) {
+  var args = [];
+  for (var i = 0; i < argumentCount; i++) {
+    args.push('a' + i);
+  }
+  var body = [
+    'return function (' + args.join(',') + ') {',
+    'var self = this;',
+    'return new Promise(function (rs, rj) {',
+    'var res = fn.call(',
+    ['self'].concat(args).concat([callbackFn]).join(','),
+    ');',
+    'if (res &&',
+    '(typeof res === "object" || typeof res === "function") &&',
+    'typeof res.then === "function"',
+    ') {rs(res);}',
+    '});',
+    '};'
+  ].join('');
+  return Function(['Promise', 'fn'], body)(Promise, fn);
+}
+function denodeifyWithoutCount(fn) {
+  var fnLength = Math.max(fn.length - 1, 3);
+  var args = [];
+  for (var i = 0; i < fnLength; i++) {
+    args.push('a' + i);
+  }
+  var body = [
+    'return function (' + args.join(',') + ') {',
+    'var self = this;',
+    'var args;',
+    'var argLength = arguments.length;',
+    'if (arguments.length > ' + fnLength + ') {',
+    'args = new Array(arguments.length + 1);',
+    'for (var i = 0; i < arguments.length; i++) {',
+    'args[i] = arguments[i];',
+    '}',
+    '}',
+    'return new Promise(function (rs, rj) {',
+    'var cb = ' + callbackFn + ';',
+    'var res;',
+    'switch (argLength) {',
+    args.concat(['extra']).map(function (_, index) {
+      return (
+        'case ' + (index) + ':' +
+        'res = fn.call(' + ['self'].concat(args.slice(0, index)).concat('cb').join(',') + ');' +
+        'break;'
+      );
+    }).join(''),
+    'default:',
+    'args[argLength] = cb;',
+    'res = fn.apply(self, args);',
+    '}',
+
+    'if (res &&',
+    '(typeof res === "object" || typeof res === "function") &&',
+    'typeof res.then === "function"',
+    ') {rs(res);}',
+    '});',
+    '};'
+  ].join('');
+
+  return Function(
+    ['Promise', 'fn'],
+    body
+  )(Promise, fn);
+}
+
 Promise.nodeify = function (fn) {
   return function () {
     var args = Array.prototype.slice.call(arguments);
@@ -719,7 +806,71 @@ Promise.prototype.nodeify = function (callback, ctx) {
   });
 }
 
-},{"./core.js":12,"asap":18}],18:[function(require,module,exports){
+},{"./core.js":13,"asap":20}],19:[function(require,module,exports){
+'use strict';
+
+var Promise = require('./core.js');
+
+module.exports = Promise;
+Promise.enableSynchronous = function () {
+  Promise.prototype.isPending = function() {
+    return this.getState() == 0;
+  };
+
+  Promise.prototype.isFulfilled = function() {
+    return this.getState() == 1;
+  };
+
+  Promise.prototype.isRejected = function() {
+    return this.getState() == 2;
+  };
+
+  Promise.prototype.getValue = function () {
+    if (this._81 === 3) {
+      return this._65.getValue();
+    }
+
+    if (!this.isFulfilled()) {
+      throw new Error('Cannot get a value of an unfulfilled promise.');
+    }
+
+    return this._65;
+  };
+
+  Promise.prototype.getReason = function () {
+    if (this._81 === 3) {
+      return this._65.getReason();
+    }
+
+    if (!this.isRejected()) {
+      throw new Error('Cannot get a rejection reason of a non-rejected promise.');
+    }
+
+    return this._65;
+  };
+
+  Promise.prototype.getState = function () {
+    if (this._81 === 3) {
+      return this._65.getState();
+    }
+    if (this._81 === -1 || this._81 === -2) {
+      return 0;
+    }
+
+    return this._81;
+  };
+};
+
+Promise.disableSynchronous = function() {
+  Promise.prototype.isPending = undefined;
+  Promise.prototype.isFulfilled = undefined;
+  Promise.prototype.isRejected = undefined;
+  Promise.prototype.getValue = undefined;
+  Promise.prototype.getReason = undefined;
+  Promise.prototype.getState = undefined;
+};
+
+},{"./core.js":13}],20:[function(require,module,exports){
 "use strict";
 
 // rawAsap provides everything we need except exception management.
@@ -787,7 +938,7 @@ RawTask.prototype.call = function () {
     }
 };
 
-},{"./raw":19}],19:[function(require,module,exports){
+},{"./raw":21}],21:[function(require,module,exports){
 (function (global){
 "use strict";
 
