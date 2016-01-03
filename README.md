@@ -13,7 +13,7 @@ This mashup provide both export the app to json and import the json file.
 * measures
 * snapshots
 * bookmarks
-* ***variables ( in the next release )***
+* variables
 * app properties - like name, thumbnail, description etc.
 * load script
 * fields
@@ -56,6 +56,13 @@ After the restore process is finished the app will be saved to preserve the chan
 * After this you will see the statistics - how many objects will be deleted, inserted and updated. Deleted objects will always be more. This number include all the sheets objects (including the sheets itself) but the json file count only the sheets ( the objects in the sheets are sheets children and they are included in the sheet object itself )
 * press the "Restore" button and wait for the process to finish. After the process is done the result table will be populated with more detail about the objects that were processed.
 * That's it! If you have the app already open just refresh the browser tabs where this app is open.
+
+#### Change log
+v0.9.0 (03/01/2016)
+  * add - "variables" support
+  * update - qsocks to v2.1.5
+  * update - serializeapp to v1.0.3
+  * fix - no need to refresh the page to switch the apps
 
 Please report and issues in the [Github issue tracker](https://github.com/countnazgul/QS-backup-and-restore-app/issues)
 

@@ -67,6 +67,7 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function($, qsocks, 
           case "measures":
           case "snapshots":
           case "bookmarks":
+          case "variables":
             for (var i = 0; i < backupContent[name].length; i++) {
               backupInfos.push({
                 info: backupContent[name][i].qInfo,
@@ -100,7 +101,6 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function($, qsocks, 
         if (present == true) {
           status.forUpdate.push(d)
         } else {
-
           if (appInfos.qInfos[i].qType != 'folder' && appInfos.qInfos[i].qType != 'internet' && appInfos.qInfos[i].qType != 'ODBC' && appInfos.qInfos[i].qType != 'OLEDB') {
             status.forDelete.push(appInfos.qInfos[i])
           }
@@ -134,7 +134,7 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function($, qsocks, 
 
   function deleteObjects() {
     return Promise.all(status.forDelete.map(function(d) {
-      //console.log('deleted123')
+      //console.log(d.qType)
       if (d.qType === 'measure') {
         return main.app.destroyMeasure(d.qId).then(function() {
           return importData.push([d.qType, '', d.qId, 'delete']);
@@ -142,15 +142,15 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function($, qsocks, 
       } else if (d.qType === 'dimension') {
         return main.app.destroyDimension(d.qId).then(function() {
           return importData.push([d.qType, '', d.qId, 'delete']);
-        });;
+        });
       } else if (d.qType === 'snapshot' || d.qType === 'bookmark') {
         return main.app.destoryBookmark(d.qId).then(function() {
           return importData.push([d.qType, '', d.qId, 'delete']);
-        });;
+        });
       } else if (d.qType === 'variable') {
         return main.app.destroyVariableById(d.qId).then(function() {
           return importData.push([d.qType, '', d.qId, 'delete']);
-        });;
+        });
       } else {
         return main.app.destroyObject(d.qId).then(function() {
           return importData.push([d.qType, '', d.qId, 'delete']);
@@ -168,6 +168,10 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function($, qsocks, 
       } else if (d.info.qType === 'dimension') {
         return main.app.createDimension(d.data).then(function(msg) {
           return importData.push(['dimension', d.data.qMetaDef.title, d.info.qId, 'create']);
+        })
+      } else if (d.info.qType === 'variable') {
+        return main.app.createVariableEx(d.data).then(function(msg) {
+          return importData.push(['variable', d.data.qName, d.info.qId, 'create']);
         })
       } else if (d.info.qType === 'snapshot' || d.info.qType === 'bookmark') {
         return main.app.createBookmark(d.data).then(function(msg) {
@@ -201,6 +205,24 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function($, qsocks, 
         return main.app.getDimension(d.info.qId).then(function(obj) {
           return obj.setProperties(d.data).then(function(msg) {
             return importData.push(['dimension', d.data.qMetaDef.title, d.info.qId, 'modify']);
+          });
+        })
+      } else if (d.info.qType === 'variable') {
+        // qDef = JSON.stringify(d.data.qDefinition);
+        // qName = JSON.stringify(d.data.qName);
+        // var patches = [{
+        //         "qOp": "replace",
+        //         "qPath": "/qDefinition",
+        //         "qValue": qDef
+        //       },{
+        //         "qOp": "replace",
+        //         "qPath": "/qName",
+        //         "qValue": qName
+        //       }];
+
+        return main.app.getVariableById(d.info.qId).then(function(obj) {
+          return obj.setProperties(d.data).then(function(msg) {
+              return importData.push(['variable', d.data.qName, d.info.qId, 'modify']);
           });
         })
       } else if (d.info.qType === 'snapshot' || d.info.qType === 'bookmark') {
@@ -266,6 +288,31 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function($, qsocks, 
     })
   }
 
+  function getVariables(app) {
+
+            return app.createSessionObject({
+                    qVariableListDef: {
+                            qType: 'variable',
+    			qShowReserved: false,
+    			qShowConfig: false,
+                            qData: {
+                                    info: '/qDimInfos'
+                            },
+                            qMeta: {}
+                    },
+                    qInfo: { qId: "VariableList", qType: "VariableList" }
+            }).then(function (list) {
+                    return list.getLayout().then(function (layout) {
+                            return Promise.all(layout.qVariableList.qItems.map(function (d) {
+                                    return app.getVariableById(d.qInfo.qId).then(function (variable) {
+                                            return variable.getProperties().then(function(properties) { return properties; });
+                                    });
+                            }));
+                    });
+            });
+
+    };
+
   $("#open").on("click", function() {
     $('#openDoc').css('visibility', 'hidden');
     $('#loadingImg').css('display', 'inline-block');
@@ -289,6 +336,7 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function($, qsocks, 
       .then(function(info) {
 
         appInfos = info;
+        //console.log(JSON.stringify(appInfos))
         main.app.getConnections().then(function(connections) {
           for (var i = 0; i < connections.length; i++) {
             appInfos.qInfos.push({
@@ -296,6 +344,18 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function($, qsocks, 
               qType: connections[i].qType
             })
           }
+
+          getVariables(main.app).then(function(variables) {
+            // console.log(variables)
+
+            for (var i = 0; i < variables.length; i++) {
+              appInfos.qInfos.push({
+                qId: variables[i].qInfo.qId,
+                qType: variables[i].qInfo.qType
+              })
+            }
+
+          })
 
           $('#json').prop('disabled', false);
           $('#loadingImg').css('display', 'none');
@@ -350,11 +410,12 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function($, qsocks, 
         insertObjects(),
         updateObjects(),
         setScript(),
-        setAppProperties(),
-        main.app.doSave()
+        setAppProperties()
       ])
       .then(function(results) {
+        main.app.doSave().then(function(results) {
         GenerateTable()
+      });
       });
 
   })
