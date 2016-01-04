@@ -208,18 +208,6 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function($, qsocks, 
           });
         })
       } else if (d.info.qType === 'variable') {
-        // qDef = JSON.stringify(d.data.qDefinition);
-        // qName = JSON.stringify(d.data.qName);
-        // var patches = [{
-        //         "qOp": "replace",
-        //         "qPath": "/qDefinition",
-        //         "qValue": qDef
-        //       },{
-        //         "qOp": "replace",
-        //         "qPath": "/qName",
-        //         "qValue": qName
-        //       }];
-
         return main.app.getVariableById(d.info.qId).then(function(obj) {
           return obj.setProperties(d.data).then(function(msg) {
               return importData.push(['variable', d.data.qName, d.info.qId, 'modify']);
@@ -314,29 +302,32 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function($, qsocks, 
     };
 
   $("#open").on("click", function() {
+    var table = $('#resultTable').DataTable();
+    table
+        .clear()
+        .draw();
+
     $('#openDoc').css('visibility', 'hidden');
     $('#loadingImg').css('display', 'inline-block');
 
     var selectedApp = $('#docList').find(":selected").val();
     selectedAppText = $('#docList').find(":selected").text();
 
-   //if( main.app ) {
-       main.global.connection.ws.close();
-   //}
+    try {
+      main.global.connection.ws.close();
+    } catch(ex) {
 
-   qSocksConnect().then(function() {
-    main.global.openDoc(selectedApp)
-      .then(function(app) {
-        main.app = app;
+    }
 
+    qSocksConnect().then(function() {
+      main.global.openDoc(selectedApp).then(function(app) {
+          main.app = app;
       })
       .then(function() {
         return main.app.getAllInfos()
       })
       .then(function(info) {
-
         appInfos = info;
-        //console.log(JSON.stringify(appInfos))
         main.app.getConnections().then(function(connections) {
           for (var i = 0; i < connections.length; i++) {
             appInfos.qInfos.push({
@@ -346,8 +337,6 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function($, qsocks, 
           }
 
           getVariables(main.app).then(function(variables) {
-            // console.log(variables)
-
             for (var i = 0; i < variables.length; i++) {
               appInfos.qInfos.push({
                 qId: variables[i].qInfo.qId,
@@ -366,6 +355,11 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function($, qsocks, 
       })
     })
   });
+
+  $.get('./backup-and-restore.qext', function(data) {
+    $('#version').text('version: '+ data.version)
+    $("#branchlink").attr("href", data.qlikbranch)
+  })
 
   $('#resultTable').DataTable({
       "scrollY": "400px",
@@ -414,26 +408,27 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function($, qsocks, 
       ])
       .then(function(results) {
         main.app.doSave().then(function(results) {
-        GenerateTable()
+          GenerateTable();
+          $('#json').replaceWith( $("#json").clone() );
+          $('#go').prop('disabled', true);
+          $('#serialize').prop('disabled', true);
+          $('#prestatus').html('');
+          $('#json').prop('disabled', true);
+          $('#openDoc').text('No active document');
+          main.global.connection.ws.close();
+        });
       });
-      });
-
   })
 
-  // qsocks.Connect(appConfig).then(function(global) {
-  //   return main.global = global;
-  // })
   qSocksConnect().then(function() {
     return main.global.getDocList()
   }).then(function(docList) {
-
     for (var i = 0; i < docList.length; i++) {
       $('#docList')
         .append($("<option></option>")
           .attr("value", docList[i].qDocId)
           .text(docList[i].qDocName));
     }
-
     $('#loadingImg').css('display', 'none');
     $('#open').prop('disabled', false);
   })

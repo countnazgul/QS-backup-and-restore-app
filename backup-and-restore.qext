@@ -1,7 +1,7 @@
 {
 	"type": "mashup",
 	"name": "Backup and Restore",
-	"version": "0.9.0",
+	"version": "0.9.1",
 	"description": "Bachup and restore QS app",
 	"preview": "images/preview.png",
 	"homepage": "https://github.com/countnazgul/QS-backup-and-restore-app",
@@ -9,6 +9,7 @@
 	"keywords": "qlik-sense, mashup",
 	"license": "",
 	"repository": "https://github.com/countnazgul/QS-backup-and-restore-app.git",
+	"qlikbranch": "http://branch-test.qlik.com/#/project/56728f52d1e497241ae698c7",
 	"dependencies": {
 		"qlik-sense": ">=2.1.1"
 	}
