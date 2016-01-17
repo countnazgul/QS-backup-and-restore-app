@@ -271,6 +271,10 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function($, qsocks, 
   }
 
   var qSocksConnect = function() {
+    var selectedApp = $('#docList').find(":selected").val();
+    if(selectedApp) {
+      appConfig.appname = selectedApp;
+    }
     return qsocks.Connect(appConfig).then(function(global) {
       return main.global = global;
     })

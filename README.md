@@ -58,6 +58,8 @@ After the restore process is finished the app will be saved to preserve the chan
 * That's it! If you have the app already open just refresh the browser tabs where this app is open.
 
 #### Change log
+v0.9.2 (17/01/2016)
+  * fix - opening multiple apps is performed correctly
 v0.9.0 (03/01/2016)
   * add - "variables" support
   * update - qsocks to v2.1.5
