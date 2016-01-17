@@ -19,7 +19,7 @@ This mashup provide both export the app to json and import the json file.
 * fields
 
 #### Installation
-***Workd with QS version >=2.1.1***
+***Works with QS version >=2.1.1***
 * QS Desktop - unzip the release in `C:\Users\[USERNAME]\Documents\Qlik\Sense\Extensions`
 * QS Server
   - login to QMC
@@ -60,6 +60,7 @@ After the restore process is finished the app will be saved to preserve the chan
 #### Change log
 v0.9.2 (17/01/2016)
   * fix - opening multiple apps is performed correctly
+
 v0.9.0 (03/01/2016)
   * add - "variables" support
   * update - qsocks to v2.1.5
