@@ -384,15 +384,44 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function($, qsocks, 
 
       $('#loadingImg').css('display', 'none');
       data = JSON.stringify(data, null, 2);
-      var a = window.document.createElement('a');
-      a.href = window.URL.createObjectURL(new Blob([data], {
-        type: 'text/json'
-      }));
-      a.download = selectedAppText + '_' + dformat + '.json';
-      a.text = 'Download';
-      a.click();
+      var fileName = selectedAppText + '_' + dformat + '.json';
+
+      if( IEversion == false ) {
+        var a = window.document.createElement('a');
+        a.href = window.URL.createObjectURL(new Blob([data], {
+          type: 'text/json'
+        }));
+        a.download = fileName;
+        a.text = 'Download';
+        a.click();
+      } else {
+       window.navigator.msSaveOrOpenBlob(new Blob([data], {type:"text/json"}), fileName);
+     }
     })
   })
+
+  var IEversion = detectIE();
+
+   // detect IE --> returns version of IE or false, if browser is not Internet Explorer http://codepen.io/gapcode/pen/vEJNZN
+  function detectIE() {
+    var ua = window.navigator.userAgent;
+    var msie = ua.indexOf('MSIE ');
+    if (msie > 0) {
+      return parseInt(ua.substring(msie + 5, ua.indexOf('.', msie)), 10); // IE 10 or older => return version number
+    }
+
+    var trident = ua.indexOf('Trident/');
+    if (trident > 0) {
+      var rv = ua.indexOf('rv:');
+      return parseInt(ua.substring(rv + 3, ua.indexOf('.', rv)), 10); // IE 11 => return version number
+    }
+
+    var edge = ua.indexOf('Edge/');
+    if (edge > 0) {
+      return parseInt(ua.substring(edge + 5, ua.indexOf('.', edge)), 10); // Edge (IE 12+) => return version number
+    }
+    return false; // other browser
+  }
 
   $("#go").on("click", function() {
     $('#loadingImg').css('display', 'inline-block');

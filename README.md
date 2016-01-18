@@ -57,7 +57,14 @@ After the restore process is finished the app will be saved to preserve the chan
 * press the "Restore" button and wait for the process to finish. After the process is done the result table will be populated with more detail about the objects that were processed.
 * That's it! If you have the app already open just refresh the browser tabs where this app is open.
 
+#### Note
+
+If the file is unable to download in IE please make sure that your "File download" option is set to "Enabled" in IE Security Settings for Internet
+
 #### Change log
+v0.9.3 (18/01/2016)
+  * fix - downloading the serialized app file works in IE 11+
+
 v0.9.2 (17/01/2016)
   * fix - opening multiple apps is performed correctly
 
