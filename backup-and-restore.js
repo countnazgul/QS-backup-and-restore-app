@@ -20,6 +20,23 @@ var main = {};
 
 require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function($, qsocks, serializeApp, DataTable) {
 
+ var getUrlParameter = function getUrlParameter(sParam) {
+	  var sPageURL = decodeURIComponent(window.location.search.substring(1)),
+		  sURLVariables = sPageURL.split('&'),
+		  sParameterName,
+		  i;
+  
+	  for (i = 0; i < sURLVariables.length; i++) {
+		  sParameterName = sURLVariables[i].split('=');
+  
+		  if (sParameterName[0] === sParam) {
+			  return sParameterName[1] === undefined ? true : sParameterName[1];
+		  }
+	  }
+  };  
+  
+  var ticket = getUrlParameter('qlikTicket');
+
   $('#open').prop('disabled', true);
   $('#go').prop('disabled', true);
   $('#serialize').prop('disabled', true);
@@ -275,10 +292,16 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function($, qsocks, 
     if(selectedApp) {
       appConfig.appname = selectedApp;
     }
-    return qsocks.Connect(appConfig).then(function(global) {
-      return main.global = global;
-    })
-  }
+    
+	if(ticket) {
+	  appConfig.ticket = ticket;
+	  console.log(ticket)
+	}  
+    
+  return qsocks.Connect(appConfig).then(function(global) {
+    return main.global = global;
+  })
+}
 
   function getVariables(app) {
 
