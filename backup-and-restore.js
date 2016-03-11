@@ -411,12 +411,15 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function($, qsocks, 
 
       if( IEversion == false ) {
         var a = window.document.createElement('a');
+        a.style = "display: none"; 
         a.href = window.URL.createObjectURL(new Blob([data], {
           type: 'text/json'
         }));
         a.download = fileName;
         a.text = 'Download';
+        document.body.appendChild(a);
         a.click();
+        document.body.removeChild(a);
       } else {
        window.navigator.msSaveOrOpenBlob(new Blob([data], {type:"text/json"}), fileName);
      }

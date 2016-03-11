@@ -62,6 +62,9 @@ After the restore process is finished the app will be saved to preserve the chan
 If the file is unable to download in IE please make sure that your "File download" option is set to "Enabled" in IE Security Settings for Internet
 
 #### Change log
+v0.9.5 (11/03/2016)
+  * fix - downloading the serialized app file works in Firefox 
+  
 v0.9.3 (18/01/2016)
   * fix - downloading the serialized app file works in IE 11+
 
