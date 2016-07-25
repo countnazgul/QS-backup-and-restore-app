@@ -1,7 +1,7 @@
 {
 	"type": "mashup",
 	"name": "Backup and Restore",
-	"version": "0.9.4",
+	"version": "0.9.5",
 	"description": "Bachup and restore QS app",
 	"preview": "images/preview.png",
 	"homepage": "https://github.com/countnazgul/QS-backup-and-restore-app",
