@@ -38,12 +38,12 @@ The restore process will read the existing app objects and will compare them wit
 * existing objects - the objects which are present in the current app and in the json file will be updated with the properties from the json file
 * missing objects - objects that are present in the current app and not present in the json file will be deleted from the app (see exclusions below)
 * new objects - objects which are present in the json file and not present in the current app will be created in the app
+* data connectors - existing data connectors will be updated but if data connector need to be inserted QS Engine will assign new id even if id is provided from the json file (this is how the engine works)
 
 Few exclusions:
 Some objects are excluded from the overall process ( for now )
 
 * embedded media - the actual media files will not be deleted ( if needed ) and they will stay in the content library. At the current moment I haven't found a method that can include these files in the backup process.
-* data connectors - connectors will not be deleted or inserted. I'm facing a bug with the method in the Engine API that when updating a connector new ID is assigned instead using the ID from the json file
 
 After the restore process is finished the app will be saved to preserve the changes. It's highly recommended to reload the app after the restore process ( my plan is to add this as an option in the following releases )
 
@@ -62,6 +62,10 @@ After the restore process is finished the app will be saved to preserve the chan
 If the file is unable to download in IE please make sure that your "File download" option is set to "Enabled" in IE Security Settings for Internet
 
 #### Change log
+v0.9.6 (26/07/2016)
+  * add - data connectors will be updated, deleted and inserted
+  * add - error count indicator + mark the error rows  
+
 v0.9.5 (11/03/2016)
   * fix - downloading the serialized app file works in Firefox 
   

@@ -16,3 +16,18 @@ isindex {
   margin-left:10px;
   margin-top:10px;
 }
+
+.error {
+    color: red;
+    font-weight: bold;
+}
+
+.noerror {
+    color: lightseagreen;
+    font-weight: bold;
+}
+
+.rowerror {
+    color: red;
+    font-weight: bold;
+}
