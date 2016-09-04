@@ -241,6 +241,7 @@ function Connection(config) {
         };
 
         if (msg.close) {
+            console.log(msg.close)
             msg.close.forEach(function (d) {
                 if (this.handles[d]) return this.handles[d].emit('close');
             }.bind(this));
