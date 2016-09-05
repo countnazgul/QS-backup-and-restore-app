@@ -60,7 +60,7 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function ($, qsocks,
     host: window.location.hostname,
     isSecure: window.location.protocol === "https:",
     appname: null,
-    port: window.location.port || 4848
+    port: window.location.port
   };
 
   var readFile = function () {
@@ -95,14 +95,16 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function ($, qsocks,
             }
             break;
           case "dataconnections":
-            for (var i = 0; i < backupContent[name].length; i++) {
-              backupInfos.push({
-                info: {
-                  qId: backupContent[name][i].qConnection.qId,
-                  qType: backupContent[name][i].qConnection.qType
-                },
-                data: backupContent[name][i]
-              })
+            if ($('#dataconnrestore').prop('checked') == true) {
+              for (var i = 0; i < backupContent[name].length; i++) {
+                backupInfos.push({
+                  info: {
+                    qId: backupContent[name][i].qConnection.qId,
+                    qType: backupContent[name][i].qConnection.qType
+                  },
+                  data: backupContent[name][i]
+                })
+              }
             }
             break;
         }
@@ -120,9 +122,9 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function ($, qsocks,
         if (present == true) {
           status.forUpdate.push(d)
         } else {
-          //if (appInfos.qInfos[i].qType != 'folder' && appInfos.qInfos[i].qType != 'internet' && appInfos.qInfos[i].qType != 'ODBC' && appInfos.qInfos[i].qType != 'OLEDB') {
-          status.forDelete.push(appInfos.qInfos[i])
-          //}
+          if (appInfos.qInfo[i].qType != 'dataconnections' ) {
+            status.forDelete.push(appInfos.qInfos[i])
+          }
         }
       }
 
@@ -153,7 +155,7 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function ($, qsocks,
 
   function deleteObjects() {
     return Promise.all(status.forDelete.map(function (d) {
-      //console.log(d.qType)
+
       if (d.qType === 'measure') {
         return main.app.destroyMeasure(d.qId).then(function () {
           return importData.push([d.qType, '', d.qId, 'delete']);
@@ -185,7 +187,7 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function ($, qsocks,
 
   function insertObjects() {
     return Promise.all(status.forInsert.map(function (d) {
-      //console.log(d.info.qType)
+
       if (d.info.qType === 'measure') {
         return main.app.createMeasure(d.data).then(function (msg) {
           return importData.push(['measure', d.data.qMetaDef.title, d.info.qId, 'create']);
@@ -209,7 +211,7 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function ($, qsocks,
           return importData.push(['snapshot', snapTitle, d.info.qId, 'create']);
         })
       } else if (d.info.qType == 'folder' || d.info.qType == 'internet' || d.info.qType == 'ODBC' || d.info.qType == 'OLEDB') {
-        //console.log(d.info.qType)
+
         return main.app.createConnection({
           qId: d.data.qConnection.qId,
           qName: d.data.qConnection.qName,
@@ -220,10 +222,10 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function ($, qsocks,
           qModifiedDate: d.data.qConnection.qModifiedDate,
           qLogOn: d.data.qConnection.qLogOn
         }).then(function (msg) {
-          //console.log(msg);
+
           return importData.push([d.info.qType, d.data.qConnection.qName, /*d.info.qId*/ msg, 'create']);
         }).catch(function (error) {
-          //console.log(error)
+
           importErrors++;
           return importData.push([d.info.qType, d.data.qConnection.qName, d.info.qId, 'Error: ' + error.message]);
         })
@@ -290,7 +292,7 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function ($, qsocks,
             }, false).then(function (msg) {
               return importData.push([d.info.qType, d.data.qConnection.qName, d.info.qId, 'modify']);
             }).catch(function (error) {
-              console.log(error)
+
               importErrors++;
               return importData.push([d.info.qType, d.data.qConnection.qName, d.info.qId, 'Error: ' + error.message]);
             });
@@ -346,10 +348,9 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function ($, qsocks,
 
     if (ticket) {
       appConfig.ticket = ticket;
-      console.log(ticket)
     }
 
-    console.log(main)
+
     if (main.global) {
       main.global.connection.close();
       main = {};
@@ -401,12 +402,6 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function ($, qsocks,
 
     var selectedApp = $('#docList').find(":selected").val();
     selectedAppText = $('#docList').find(":selected").text();
-
-    // try {
-    //   main.global.connection.close();
-    // } catch (ex) {
-    //   console.log(ex)
-    // }
 
     qSocksConnect().then(function () {
       //main.global = global;
