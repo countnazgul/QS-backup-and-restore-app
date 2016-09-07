@@ -148,7 +148,7 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function ($, qsocks,
       $('#go').prop('disabled', false);
       $('#serialize').prop('disabled', false);
     };
-    reader.readAsBinaryString(fileInput.files[0]);
+    reader.readAsText(fileInput.files[0]);
   };
 
   fileInput.addEventListener('change', readFile);
