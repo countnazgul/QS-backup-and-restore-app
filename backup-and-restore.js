@@ -122,7 +122,7 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function ($, qsocks,
         if (present == true) {
           status.forUpdate.push(d)
         } else {
-          if (appInfos.qInfo[i].qType != 'dataconnections' ) {
+          if (appInfos.qInfos[i].qType != 'dataconnections' ) {
             status.forDelete.push(appInfos.qInfos[i])
           }
         }
@@ -197,6 +197,7 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function ($, qsocks,
           return importData.push(['dimension', d.data.qMetaDef.title, d.info.qId, 'create']);
         })
       } else if (d.info.qType === 'variable') {
+        //console.log(JSON.stringify(d.data));
         return main.app.createVariableEx(d.data).then(function (msg) {
           return importData.push(['variable', d.data.qName, d.info.qId, 'create']);
         })
