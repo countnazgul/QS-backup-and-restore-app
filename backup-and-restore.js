@@ -66,13 +66,18 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function ($, qsocks,
   var readFile = function () {
     var reader = new FileReader();
     reader.onload = function () {
+      backupInfos = [];
+      status.forUpdate = [];
+      status.forDelete = [];
+      status.forInsert = [];
+      
       backupContent = JSON.parse(reader.result);
       loadScript = backupContent.loadScript;
       properties = backupContent.properties;
 
       for (var name in backupContent) {
         switch (name) {
-          case "sheets":
+          case "sheets1":
           case "stories":
           case "masterobjects":
             for (var i = 0; i < backupContent[name].length; i++) {
@@ -82,7 +87,7 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function ($, qsocks,
               })
             }
             break;
-          case "dimensions":
+          case "dimensions1":
           case "measures":
           case "snapshots":
           case "bookmarks":
@@ -94,7 +99,7 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function ($, qsocks,
               })
             }
             break;
-          case "dataconnections":
+          case "dataconnections1":
             if ($('#dataconnrestore').prop('checked') == true) {
               for (var i = 0; i < backupContent[name].length; i++) {
                 backupInfos.push({
@@ -122,7 +127,7 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function ($, qsocks,
         if (present == true) {
           status.forUpdate.push(d)
         } else {
-          if (appInfos.qInfos[i].qType != 'dataconnections' ) {
+          if (appInfos.qInfos[i].qType != 'dataconnections') {
             status.forDelete.push(appInfos.qInfos[i])
           }
         }
@@ -148,10 +153,11 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function ($, qsocks,
       $('#go').prop('disabled', false);
       $('#serialize').prop('disabled', false);
     };
-    reader.readAsText(fileInput.files[0]);
+    reader.readAsBinaryString(fileInput.files[0]);
+    fileInput.addEventListener('change', readFile, false);
   };
 
-  fileInput.addEventListener('change', readFile);
+  fileInput.addEventListener('change', readFile, false);
 
   function deleteObjects() {
     return Promise.all(status.forDelete.map(function (d) {
@@ -525,23 +531,24 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function ($, qsocks,
 
     Promise.all([
       deleteObjects(),
-      insertObjects(),
-      updateObjects(),
-      setScript(),
-      setAppProperties()
+      //insertObjects(),
+      //updateObjects(),
+      //setScript(),
+      //setAppProperties()
     ])
       .then(function (results) {
-        main.app.doSave().then(function (results) {
-          GenerateTable();
-          $('#json').replaceWith($("#json").clone());
-          $('#go').prop('disabled', true);
-          $('#serialize').prop('disabled', true);
-          $('#prestatus').html('');
-          $('#json').prop('disabled', true);
-          $('#openDoc').text('No active document');
-          main.global.connection.ws.close();
-          main = {};
-        });
+        //        main.app.doSave().then(function (results) {
+        GenerateTable();
+        //$('#json').replaceWith($("#json").clone());
+        $('#go').prop('disabled', true);
+        $('#serialize').prop('disabled', true);
+        $('#prestatus').html('');
+        $('#json').prop('disabled', true);
+        $('#openDoc').text('No active document');
+        main.global.connection.ws.close();
+        main = {};
+        $('#json').val(null);
+        //        });
       });
   })
 
