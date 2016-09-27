@@ -77,7 +77,7 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function ($, qsocks,
 
       for (var name in backupContent) {
         switch (name) {
-          case "sheets1":
+          case "sheets":
           case "stories":
           case "masterobjects":
             for (var i = 0; i < backupContent[name].length; i++) {
@@ -218,9 +218,6 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function ($, qsocks,
           return importData.push(['snapshot', snapTitle, d.info.qId, 'create']);
         })
       } else if (d.info.qType == 'folder' || d.info.qType == 'internet' || d.info.qType == 'ODBC' || d.info.qType == 'OLEDB') {
-
-
-
         return main.app.createConnection({
           qId: d.data.qConnection.qId,
           qName: d.data.qConnection.qName,
@@ -240,6 +237,7 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function ($, qsocks,
         })
       }
       else if (d.data.qProperty) {
+        console.log('t')
         return main.app.createObject(d.data.qProperty).then(function (handle) {
           return handle.setFullPropertyTree(d.data).then(function () {
             return importData.push([d.info.qType, '', d.info.qId, 'create']);
@@ -248,7 +246,7 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function ($, qsocks,
       }
     })).catch(function (error) {
       importErrors++;
-      importData.push([d.info.qType, d.data.qConnection.qName, d.info.qId, 'Error: ' + error.message]);
+      //importData.push([d.info.qType, d.data.qConnection.qName, d.info.qId, 'Error: ' + error.message]);
       console.log(error)
     })
   }
@@ -423,6 +421,10 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function ($, qsocks,
 
   $("#open").on("click", function () {
     $('#errorsCount').text('');
+    $('#openDoc').text('No active document');
+    $('#json').prop('disabled', true);
+    $('#json').val(null);    
+    $('#prestatus').html('');
     var table = $('#resultTable').DataTable();
     table
       .clear()
@@ -562,16 +564,16 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function ($, qsocks,
     ])
       .then(function (results) {
         //main.app.doSave().then(function (results) {
-        GenerateTable();
-        //$('#json').replaceWith($("#json").clone());
-        $('#go').prop('disabled', true);
-        $('#serialize').prop('disabled', true);
-        $('#prestatus').html('');
-        $('#json').prop('disabled', true);
-        $('#openDoc').text('No active document');
-        main.global.connection.ws.close();
-        main = {};
-        $('#json').val(null);
+          GenerateTable();
+          //$('#json').replaceWith($("#json").clone());
+          $('#go').prop('disabled', true);
+          $('#serialize').prop('disabled', true);
+          $('#prestatus').html('');
+          $('#json').prop('disabled', true);
+          $('#openDoc').text('No active document');
+          main.global.connection.ws.close();
+          main = {};
+          $('#json').val(null);
         //});
       });
   })
