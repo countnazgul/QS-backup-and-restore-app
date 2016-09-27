@@ -99,7 +99,7 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function ($, qsocks,
               })
             }
             break;
-          case "dataconnections1":
+          case "dataconnections":
             if ($('#dataconnrestore').prop('checked') == true) {
               for (var i = 0; i < backupContent[name].length; i++) {
                 backupInfos.push({
@@ -202,11 +202,6 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function ($, qsocks,
         return main.app.createDimension(d.data).then(function (msg) {
           return importData.push(['dimension', d.data.qMetaDef.title, d.info.qId, 'create']);
         })
-      } else if (d.info.qType === 'variable') {
-        //console.log(JSON.stringify(d.data));
-        return main.app.createVariableEx(d.data).then(function (msg) {
-          return importData.push(['variable', d.data.qName, d.info.qId, 'create']);
-        })
       } else if (d.info.qType === 'snapshot' || d.info.qType === 'bookmark') {
         return main.app.createBookmark(d.data).then(function (msg) {
           var snapTitle;
@@ -237,17 +232,20 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function ($, qsocks,
         })
       }
       else if (d.data.qProperty) {
-        console.log('t')
         return main.app.createObject(d.data.qProperty).then(function (handle) {
           return handle.setFullPropertyTree(d.data).then(function () {
             return importData.push([d.info.qType, '', d.info.qId, 'create']);
           });
         })
+      } else if (d.info.qType === 'variable') {
+        //console.log(JSON.stringify(d.data));
+        return main.app.createVariableEx(d.data).then(function (msg) {
+          return importData.push(['variable', d.data.qName, d.info.qId, 'create']);
+        })
       }
     })).catch(function (error) {
       importErrors++;
-      //importData.push([d.info.qType, d.data.qConnection.qName, d.info.qId, 'Error: ' + error.message]);
-      console.log(error)
+      //console.log(error)
     })
   }
 
@@ -423,7 +421,7 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function ($, qsocks,
     $('#errorsCount').text('');
     $('#openDoc').text('No active document');
     $('#json').prop('disabled', true);
-    $('#json').val(null);    
+    $('#json').val(null);
     $('#prestatus').html('');
     var table = $('#resultTable').DataTable();
     table
@@ -563,7 +561,7 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function ($, qsocks,
       setAppProperties()
     ])
       .then(function (results) {
-        //main.app.doSave().then(function (results) {
+        main.app.doSave().then(function (results) {
           GenerateTable();
           //$('#json').replaceWith($("#json").clone());
           $('#go').prop('disabled', true);
@@ -574,7 +572,7 @@ require(['jquery', 'qsocks', 'serializeApp', 'dataTables'], function ($, qsocks,
           main.global.connection.ws.close();
           main = {};
           $('#json').val(null);
-        //});
+        });
       });
   })
 
