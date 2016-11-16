@@ -1,0 +1,17 @@
+{
+  "name": "backup and restore",
+  "version": "0.10.1",
+  "description": "Bachup and restore QS app",
+  "license": "MIT",
+  "repository": "https://github.com/countnazgul/QS-backup-and-restore-app.git",
+  "author": {
+    "name": "Stefan Stoichev",
+    "email": "stefan.stoichev@gmail.com",
+    "url": "https://sstoichev.eu"
+  },
+  "devDependencies": {
+    "gulp": "*",
+    "gulp-watch": "4.x.x",
+    "gulp-zip": "3.x.x"
+  }
+}

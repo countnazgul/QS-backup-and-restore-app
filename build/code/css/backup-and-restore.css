@@ -1,0 +1,33 @@
+body,
+input,
+textarea,
+keygen,
+select,
+button,
+isindex {
+    font-family: 'QlikView Sans';
+    src: url(../../resources/css/fonts/qlikview-sans.ttf) format('truetype');
+    font-style: normal;
+    font-size: 13px;
+    color: #595959;
+}
+
+.main {
+  margin-left:10px;
+  margin-top:10px;
+}
+
+.error {
+    color: red;
+    font-weight: bold;
+}
+
+.noerror {
+    color: lightseagreen;
+    font-weight: bold;
+}
+
+.rowerror {
+    color: red;
+    font-weight: bold;
+}
